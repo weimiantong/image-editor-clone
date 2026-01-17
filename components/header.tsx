@@ -5,8 +5,23 @@ import { Button } from "@/components/ui/button"
 import { BananaIcon } from "@/components/banana-icon"
 import { Menu } from "lucide-react"
 import { useState } from "react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu"
 
-export function Header() {
+type Props = {
+  userEmail?: string
+  displayName?: string
+  avatarUrl?: string
+}
+
+export function Header({ userEmail, displayName, avatarUrl }: Props) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
@@ -34,10 +49,16 @@ export function Header() {
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-              Sign In
-            </Button>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Get Started</Button>
+            {userEmail ? (
+              <UserMenu email={userEmail} name={displayName} avatarUrl={avatarUrl} />
+            ) : (
+              <>
+                <Button asChild variant="ghost" className="text-muted-foreground hover:text-foreground">
+                  <a href="/auth/login">Sign In</a>
+                </Button>
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Get Started</Button>
+              </>
+            )}
           </div>
 
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -61,15 +82,80 @@ export function Header() {
                 FAQ
               </Link>
               <div className="flex flex-col gap-2 pt-4">
-                <Button variant="ghost" className="justify-start">
-                  Sign In
-                </Button>
-                <Button className="bg-primary text-primary-foreground">Get Started</Button>
+                {userEmail ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Avatar>
+                        <AvatarImage src={avatarUrl} alt={displayName || userEmail} />
+                        <AvatarFallback>{(displayName || userEmail || "").slice(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm truncate max-w-[180px]">
+                          {displayName || userEmail}
+                        </span>
+                        <span className="text-xs text-muted-foreground truncate max-w-[180px]">
+                          {userEmail}
+                        </span>
+                      </div>
+                    </div>
+                    <form action="/auth/logout" method="post">
+                      <Button type="submit" variant="ghost">Sign Out</Button>
+                    </form>
+                  </div>
+                ) : (
+                  <>
+                    <Button asChild variant="ghost" className="justify-start">
+                      <a href="/auth/login">Sign In</a>
+                    </Button>
+                    <Button className="bg-primary text-primary-foreground">Get Started</Button>
+                  </>
+                )}
               </div>
             </nav>
           </div>
         )}
       </div>
     </header>
+  )
+}
+
+function UserMenu({
+  email,
+  name,
+  avatarUrl,
+}: {
+  email?: string
+  name?: string
+  avatarUrl?: string
+}) {
+  const label = name || email || "User"
+  const initials = (label || "").slice(0, 2).toUpperCase()
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
+        <Avatar>
+          <AvatarImage src={avatarUrl} alt={label} />
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
+        <span className="text-sm text-muted-foreground">{label}</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel className="max-w-[220px] truncate">
+          {email}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <a href="/">Home</a>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <form action="/auth/logout" method="post">
+            <button type="submit" className="w-full text-left">
+              Sign Out
+            </button>
+          </form>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
