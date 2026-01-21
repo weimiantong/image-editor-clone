@@ -7,16 +7,14 @@ async function startCheckout(priceId: string) {
   const res = await fetch("/api/creem/checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ priceId }),
+    body: JSON.stringify({ priceId, returnUrl: "/pricing" }),
   })
-  if (!res.ok) {
-    const msg = await res.text()
-    throw new Error(msg || "Failed to start checkout")
-  }
   const data = await res.json()
-  if (data?.url) {
-    window.location.href = data.url
+  if (res.status === 401 && data?.login) {
+    window.location.href = data.login
+    return
   }
+  if (res.ok && data?.url) window.location.href = data.url
 }
 
 export default function PricingPage() {
@@ -125,4 +123,3 @@ export default function PricingPage() {
     </main>
   )
 }
-

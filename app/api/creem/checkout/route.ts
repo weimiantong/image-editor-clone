@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server"
 // Docs: https://docs.creem.io/api-reference/introduction
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { priceId?: string }
+    const body = (await request.json()) as { priceId?: string; returnUrl?: string }
     if (!body?.priceId) {
       return NextResponse.json({ error: "priceId required" }, { status: 400 })
     }
@@ -17,8 +17,9 @@ export async function POST(request: Request) {
     }
 
     const origin = new URL(request.url).origin
-    const successUrl = `${origin}/pricing?status=success`
-    const cancelUrl = `${origin}/pricing?status=cancelled`
+    const fromUrl = body.returnUrl || "/pricing"
+    const successUrl = `${origin}${fromUrl}?status=success`
+    const cancelUrl = `${origin}${fromUrl}?status=cancelled`
 
     // Attach user context if logged in
     const supabase = await createSupabaseServerClient()
@@ -30,6 +31,11 @@ export async function POST(request: Request) {
       price_id: body.priceId,
       success_url: successUrl,
       cancel_url: cancelUrl,
+    }
+
+    if (!user) {
+      const login = `/auth/login?next=${encodeURIComponent(fromUrl)}`
+      return NextResponse.json({ login }, { status: 401 })
     }
 
     if (user) {
@@ -61,4 +67,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: e?.message || "unknown" }, { status: 500 })
   }
 }
-

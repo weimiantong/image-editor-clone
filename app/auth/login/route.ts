@@ -4,8 +4,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server"
 export async function GET(request: Request) {
   const supabase = await createSupabaseServerClient()
   const url = new URL(request.url)
+  const next = url.searchParams.get("next")
 
-  const redirectTo = `${url.origin}/auth/callback`
+  const redirectTo = `${url.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ""}`
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

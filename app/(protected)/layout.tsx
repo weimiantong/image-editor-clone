@@ -13,10 +13,9 @@ export default async function ProtectedLayout({
   } = await supabase.auth.getUser()
 
   if (!user) {
-    // If not authenticated, send to login
-    redirect("/auth/login")
+    // If not authenticated, send to login and preserve destination
+    redirect(`/auth/login?next=${encodeURIComponent("/" + ("(protected)"))}`)
   }
 
   return <>{children}</>
 }
-
