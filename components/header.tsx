@@ -46,6 +46,9 @@ export function Header({ userEmail, displayName, avatarUrl }: Props) {
             <Link href="#faq" className="text-muted-foreground hover:text-foreground transition-colors">
               FAQ
             </Link>
+            <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+              Pricing
+            </Link>
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
@@ -80,6 +83,9 @@ export function Header({ userEmail, displayName, avatarUrl }: Props) {
               </Link>
               <Link href="#faq" className="text-muted-foreground hover:text-foreground transition-colors">
                 FAQ
+              </Link>
+              <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                Pricing
               </Link>
               <div className="flex flex-col gap-2 pt-4">
                 {userEmail ? (
