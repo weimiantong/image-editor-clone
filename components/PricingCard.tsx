@@ -11,6 +11,7 @@ type PricingCardProps = {
   ctaLabel: string
   ctaAction?: () => void
   href?: string
+  disabled?: boolean
 }
 
 export function PricingCard({
@@ -22,6 +23,7 @@ export function PricingCard({
   ctaLabel,
   ctaAction,
   href,
+  disabled,
 }: PricingCardProps) {
   return (
     <div
@@ -49,16 +51,18 @@ export function PricingCard({
       </ul>
       <div className="mt-auto">
         {href ? (
-          <Button asChild className="w-full">
+          <Button asChild className="w-full" disabled={disabled}>
             <a href={href}>{ctaLabel}</a>
           </Button>
         ) : (
-          <Button onClick={ctaAction} className="w-full">
+          <Button onClick={ctaAction} className="w-full" disabled={disabled}>
             {ctaLabel}
           </Button>
         )}
+        {disabled ? (
+          <p className="text-xs text-muted-foreground mt-2">Not available: price not configured</p>
+        ) : null}
       </div>
     </div>
   )
 }
-

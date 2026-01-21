@@ -110,6 +110,7 @@ export default function PricingPage() {
           features={pro.features}
           ctaLabel="Upgrade to Pro"
           ctaAction={() => PRO_PRICE_ID && startCheckout(PRO_PRICE_ID)}
+          disabled={!PRO_PRICE_ID}
         />
         <PricingCard
           name={teams.name}
@@ -118,6 +119,7 @@ export default function PricingPage() {
           features={teams.features}
           ctaLabel="Start Teams"
           ctaAction={() => TEAMS_PRICE_ID && startCheckout(TEAMS_PRICE_ID)}
+          disabled={!TEAMS_PRICE_ID}
         />
       </div>
     </main>
