@@ -11,12 +11,22 @@ export async function Header() {
   const userEmail = user?.email || meta.email || undefined
   const displayName = meta.full_name || meta.name || undefined
   const avatarUrl = meta.avatar_url || meta.picture || undefined
+  let points: number | undefined = undefined
+  if (user) {
+    const { data } = await supabase
+      .from("user_points")
+      .select("points")
+      .eq("user_id", user.id)
+      .maybeSingle()
+    points = data?.points ?? 0
+  }
 
   return (
     <HeaderClient
       userEmail={userEmail}
       displayName={displayName}
       avatarUrl={avatarUrl}
+      points={points}
     />
   )
 }

@@ -19,9 +19,10 @@ type Props = {
   userEmail?: string
   displayName?: string
   avatarUrl?: string
+  points?: number
 }
 
-export function Header({ userEmail, displayName, avatarUrl }: Props) {
+export function Header({ userEmail, displayName, avatarUrl, points }: Props) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
@@ -53,7 +54,10 @@ export function Header({ userEmail, displayName, avatarUrl }: Props) {
 
           <div className="hidden md:flex items-center gap-4">
             {userEmail ? (
-              <UserMenu email={userEmail} name={displayName} avatarUrl={avatarUrl} />
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-muted-foreground">{typeof points === 'number' ? `${points} pts` : ''}</span>
+                <UserMenu email={userEmail} name={displayName} avatarUrl={avatarUrl} />
+              </div>
             ) : (
               <>
                 <Button asChild variant="ghost" className="text-muted-foreground hover:text-foreground">
@@ -102,6 +106,7 @@ export function Header({ userEmail, displayName, avatarUrl }: Props) {
                         <span className="text-xs text-muted-foreground truncate max-w-[180px]">
                           {userEmail}
                         </span>
+                        <span className="text-xs text-muted-foreground">{typeof points === 'number' ? `${points} pts` : ''}</span>
                       </div>
                     </div>
                     <form action="/auth/logout" method="post">
@@ -152,6 +157,9 @@ function UserMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <a href="/">Home</a>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href="/account">Account</a>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
