@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,6 +19,7 @@ export function GeneratorSection() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [outputs, setOutputs] = useState<string[]>([])
+  const [points, setPoints] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -63,6 +64,22 @@ export function GeneratorSection() {
     setIsGenerating(true)
     setOutputs([])
     try {
+      // Load balance if unknown
+      if (points === null) {
+        try {
+          const pb = await fetch('/api/points/balance')
+          const pbd = await pb.json().catch(() => null)
+          if (pb.ok && typeof pbd?.points === 'number') setPoints(pbd.points)
+        } catch {}
+      }
+
+      const isPro = selectedModel === 'nano-banana-pro'
+      const need = isPro ? 5 : 1
+      if (points !== null && points < need) {
+        setError(`积分不足，需要 ${need} 分。请前往账户充值后再试。`)
+        return
+      }
+
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,10 +90,15 @@ export function GeneratorSection() {
         }),
       })
       const data = await res.json()
+      if (res.status === 402) {
+        setError("积分不足，请前往账户充值后再试。")
+        return
+      }
       if (!res.ok) {
         throw new Error(data?.error || "Failed to generate")
       }
       const imgs: string[] = Array.isArray(data?.images) ? data.images : []
+      if (typeof data?.remainingPoints === 'number') setPoints(data.remainingPoints)
       if (imgs.length === 0 && data?.raw) {
         // If no images found, try to display something meaningful.
         const text = typeof data.raw?.content === "string" ? data.raw.content : JSON.stringify(data.raw)
@@ -89,6 +111,19 @@ export function GeneratorSection() {
       setIsGenerating(false)
     }
   }
+
+  // Initial balance load
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const resp = await fetch('/api/points/balance')
+        const data = await resp.json().catch(() => null)
+        if (mounted && resp.ok && typeof data?.points === 'number') setPoints(data.points)
+      } catch {}
+    })()
+    return () => { mounted = false }
+  }, [])
 
   // Trigger a client-side download for a given image source
   const downloadImage = async (src: string, index: number) => {
@@ -152,7 +187,15 @@ export function GeneratorSection() {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Left Panel - Controls */}
           <Card className="bg-card border-border p-6">
-            <h2 className="text-2xl font-bold text-foreground mb-6">Image Generator</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-foreground">Image Generator</h2>
+              <div className="text-sm">
+                <span className="mr-2 text-muted-foreground">余额:</span>
+                <a href="/account" className="font-semibold text-primary hover:underline">
+                  {points === null ? '—' : `${points} 分`}
+                </a>
+              </div>
+            </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
               <TabsList className="grid w-full grid-cols-2 bg-secondary">
@@ -282,8 +325,13 @@ export function GeneratorSection() {
                 disabled={isGenerating || (!prompt && uploadedImages.length === 0)}
               >
                 <Sparkles className="w-5 h-5 mr-2" />
-                {isGenerating ? "Generating..." : "Generate Now (2 Credits)"}
+                {isGenerating ? "Generating..." : "立即生成"}
               </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                普通模型消耗 1 分，Pro 模型消耗 5 分。积分不足将无法生成，前往
+                <a className="text-primary mx-1 hover:underline" href="/account">账户</a>
+                充值。
+              </p>
             </div>
           </Card>
 

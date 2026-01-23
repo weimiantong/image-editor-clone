@@ -6,6 +6,7 @@ import { BananaIcon } from "@/components/banana-icon"
 import { Menu } from "lucide-react"
 import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,7 +56,11 @@ export function Header({ userEmail, displayName, avatarUrl, points }: Props) {
           <div className="hidden md:flex items-center gap-4">
             {userEmail ? (
               <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground">{typeof points === 'number' ? `${points} pts` : ''}</span>
+                {typeof points === 'number' ? (
+                  <a href="/account" className="no-underline">
+                    <Badge variant="default">{points} pts</Badge>
+                  </a>
+                ) : null}
                 <UserMenu email={userEmail} name={displayName} avatarUrl={avatarUrl} />
               </div>
             ) : (

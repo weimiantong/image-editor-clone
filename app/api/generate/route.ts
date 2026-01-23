@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import crypto from "node:crypto";
 
 // Simple mapping from UI model ids to OpenRouter models.
 // Note: We default to google/gemini-2.5-flash-image for now since the UI labels
@@ -50,6 +52,34 @@ export async function POST(req: NextRequest) {
     const prompt: string = body?.prompt || "";
     const images: string[] = Array.isArray(body?.images) ? body.images : [];
     const selectedModel: string = body?.model || "nano-banana";
+
+    // Points cost: 1 for normal, 5 for pro
+    const isPro = selectedModel === "nano-banana-pro";
+    const cost = isPro ? 5 : 1;
+
+    // Require auth to spend points
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const requestId = (() => {
+      try { return crypto.randomUUID(); } catch { return `req_${Date.now()}`; }
+    })();
+    const reason = isPro ? "gen:pro" : "gen:basic";
+    const { data: remaining, error: spendErr } = await supabase.rpc("spend_points", {
+      cost,
+      in_reason: reason,
+      in_meta: { requestId, model: selectedModel },
+    });
+    if (spendErr) {
+      return NextResponse.json({ error: spendErr.message || "Spend failed" }, { status: 400 });
+    }
+    if (remaining == null) {
+      return NextResponse.json({ error: "Insufficient points" }, { status: 402 });
+    }
 
     if (!process.env.OPENROUTER_API_KEY) {
       return NextResponse.json({ error: "Missing OPENROUTER_API_KEY" }, { status: 500 });
@@ -185,7 +215,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ images: imagesOut, raw }, { status: 200 });
+    return NextResponse.json({ images: imagesOut, raw, remainingPoints: remaining }, { status: 200 });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || "Unexpected error" }, { status: 500 });
   }
